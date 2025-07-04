@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../widgets/circular_avatar.dart';
 import '../providers/user_provider.dart';
 import 'chat_screen.dart';
-import 'profile_screen1.dart'; // For ProfileScreenLite popup
+import 'profile_screen1.dart';
 
 class ViewGroupsScreen extends StatefulWidget {
   const ViewGroupsScreen({super.key});
@@ -18,7 +18,7 @@ class ViewGroupsScreen extends StatefulWidget {
 class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
   List<Map<String, dynamic>> organiserGroups = [];
   List<Map<String, dynamic>> memberGroups = [];
-  Map<String, dynamic> userCache = {}; // Cache user profiles
+  Map<String, dynamic> userCache = {};
   String? currentUserId;
 
   @override
@@ -68,14 +68,11 @@ class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
     final groupRef =
         "https://sportface-f9594-default-rtdb.firebaseio.com/groups/$groupId";
 
-    // Remove request
     await http.delete(Uri.parse("$groupRef/requests/$userId.json"));
 
     if (accept) {
-      // Add user to members
       final memberRef = Uri.parse("$groupRef/members.json");
 
-      // Fetch current members
       final currentMembersRes = await http.get(memberRef);
       List<dynamic> currentMembers = [];
       if (currentMembersRes.statusCode == 200) {
@@ -87,11 +84,26 @@ class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
         }
       }
 
-      // Avoid duplicates
       if (!currentMembers.contains(userId)) {
         currentMembers.add(userId);
         await http.put(memberRef, body: jsonEncode(currentMembers));
       }
+
+      // Mark accepted in user's profile
+      await http.put(
+        Uri.parse(
+          'https://sportface-f9594-default-rtdb.firebaseio.com/users/$userId/groupRequests/$groupId.json',
+        ),
+        body: jsonEncode({"status": "accepted"}),
+      );
+    } else {
+      // Mark rejected
+      await http.put(
+        Uri.parse(
+          'https://sportface-f9594-default-rtdb.firebaseio.com/users/$userId/groupRequests/$groupId.json',
+        ),
+        body: jsonEncode({"status": "rejected"}),
+      );
     }
 
     fetchGroups();
@@ -146,14 +158,11 @@ class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Group Header
             Text(
               groupName,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-
-            // Requests Section (only if organiser)
             if (isOrganiser && requests.isNotEmpty) ...[
               const Text(
                 "Join Requests:",
@@ -216,8 +225,6 @@ class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
               ),
               const Divider(),
             ],
-
-            // Members Section
             const Text(
               "Group Members:",
               style: TextStyle(fontWeight: FontWeight.bold),
@@ -239,10 +246,7 @@ class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
                     );
                   }).toList(),
             ),
-
             const SizedBox(height: 12),
-
-            // Chat Button
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
@@ -284,7 +288,6 @@ class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Organiser Groups Section
               Text(
                 "Groups You Organise",
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -297,10 +300,7 @@ class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
               ...organiserGroups.map(
                 (g) => buildGroupCard(g, isOrganiser: true),
               ),
-
               const SizedBox(height: 24),
-
-              // Member Groups Section
               Text(
                 "Groups You Joined",
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(

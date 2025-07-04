@@ -24,13 +24,13 @@ class _CompanionCardState extends State<CompanionCard> {
   Timer? countdownTimer;
   Duration? remainingTime;
   bool isExpired = false;
-  bool isDeleting = false;
   String? selectedPrice;
 
   @override
   void initState() {
     super.initState();
     checkGroupStatus();
+    checkRequestStatus();
     startCountdown();
   }
 
@@ -82,6 +82,38 @@ class _CompanionCardState extends State<CompanionCard> {
       }
     } catch (e) {
       debugPrint("❌ Group status check failed: $e");
+    }
+  }
+
+  Future<void> checkRequestStatus() async {
+    final userId = Provider.of<UserProvider>(context, listen: false).user?.id;
+    final groupId = widget.data['groupId'];
+    if (userId == null || groupId == null) return;
+
+    final url = Uri.parse(
+      'https://sportface-f9594-default-rtdb.firebaseio.com/users/$userId/groupRequests/$groupId.json',
+    );
+
+    try {
+      final res = await http.get(url);
+      if (res.statusCode == 200 && res.body != "null") {
+        final data = jsonDecode(res.body);
+        if (data["status"] == "accepted") {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("✅ Your request has been accepted.")),
+          );
+          await http.delete(url);
+          checkGroupStatus();
+        } else if (data["status"] == "rejected") {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("❌ Your request was declined.")),
+          );
+          await http.delete(url);
+          setState(() => isRequested = false);
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ checkRequestStatus error: $e");
     }
   }
 
@@ -218,17 +250,6 @@ class _CompanionCardState extends State<CompanionCard> {
                     onTap: () => showOrganiserProfile(context, organiserId),
                     child: CircularAvatar(userId: organiserId),
                   ),
-                  if (organiserId == currentUserId) ...[
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {},
-                      child: const Icon(
-                        Icons.delete_forever,
-                        color: Colors.red,
-                        size: 28,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -298,12 +319,14 @@ class _CompanionCardState extends State<CompanionCard> {
                             });
                           },
                           items:
-                              ["50", "100", "150", "200"].map((price) {
-                                return DropdownMenuItem<String>(
-                                  value: price,
-                                  child: Text("₹$price"),
-                                );
-                              }).toList(),
+                              ["50", "100", "150", "200"]
+                                  .map(
+                                    (price) => DropdownMenuItem<String>(
+                                      value: price,
+                                      child: Text("₹$price"),
+                                    ),
+                                  )
+                                  .toList(),
                         ),
                       ),
                       ElevatedButton.icon(
