@@ -1,5 +1,5 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../widgets/circular_avatar.dart';
 
 class ProfileScreenLite extends StatelessWidget {
   final String name;
@@ -17,38 +17,51 @@ class ProfileScreenLite extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget avatar;
+
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      avatar = const CircleAvatar(
+        radius: 40,
+        child: Icon(Icons.person, size: 40),
+      );
+    } else if (imageUrl!.startsWith('data:image')) {
+      try {
+        final base64String = imageUrl!.split(',').last;
+        final imageBytes = base64Decode(base64String);
+        avatar = CircleAvatar(
+          radius: 40,
+          backgroundImage: MemoryImage(imageBytes),
+        );
+      } catch (e) {
+        avatar = const CircleAvatar(
+          radius: 40,
+          child: Icon(Icons.person, size: 40),
+        );
+      }
+    } else {
+      avatar = CircleAvatar(
+        radius: 40,
+        backgroundImage: NetworkImage(imageUrl!),
+      );
+    }
+
     return AlertDialog(
-      contentPadding: const EdgeInsets.all(20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      title: const Text('User Profile'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularAvatar(imageUrl: imageUrl, radius: 50),
-          const SizedBox(height: 16),
-          Text('Name: $name'),
-          const SizedBox(height: 8),
-          Text('Email: $email'),
-          const SizedBox(height: 8),
+          avatar,
+          const SizedBox(height: 12),
+          Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(email),
+          const SizedBox(height: 4),
           Text('Age: $age'),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Text('Verified '),
-              Text(
-                '✅️',
-                style: TextStyle(
-                  color: Color(0xFF1DA1F2),
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),
         ),
       ],

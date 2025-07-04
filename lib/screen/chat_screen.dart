@@ -17,7 +17,6 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
   List<Map<String, dynamic>> messages = [];
 
   @override
@@ -27,7 +26,6 @@ class _ChatScreenState extends State<ChatScreen> {
     listenToMessages();
   }
 
-  /// 🚦 Check if the user is a member of this group
   Future<void> validateAccess() async {
     final userId = Provider.of<UserProvider>(context, listen: false).user?.id;
     if (userId == null) return;
@@ -60,12 +58,13 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void listenToMessages() {
+  void listenToMessages() async {
     final url = Uri.parse(
       'https://sportface-f9594-default-rtdb.firebaseio.com/chats/${widget.groupId}.json',
     );
 
-    http.get(url).then((res) {
+    try {
+      final res = await http.get(url);
       if (res.statusCode == 200 && mounted) {
         final Map<String, dynamic>? data = jsonDecode(res.body);
         final List<Map<String, dynamic>> tempMessages = [];
@@ -94,7 +93,9 @@ class _ChatScreenState extends State<ChatScreen> {
           }
         });
       }
-    });
+    } catch (e) {
+      debugPrint('❌ listenToMessages error: $e');
+    }
   }
 
   Future<void> sendMessage() async {

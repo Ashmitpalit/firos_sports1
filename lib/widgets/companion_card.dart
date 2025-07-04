@@ -99,14 +99,36 @@ class _CompanionCardState extends State<CompanionCard> {
       if (res.statusCode == 200 && res.body != "null") {
         final data = jsonDecode(res.body);
         if (data["status"] == "accepted") {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("✅ Your request has been accepted.")),
+          await showDialog(
+            context: context,
+            builder:
+                (_) => AlertDialog(
+                  title: const Text("Request Accepted"),
+                  content: const Text("✅ Your request has been accepted."),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("OK"),
+                    ),
+                  ],
+                ),
           );
           await http.delete(url);
           checkGroupStatus();
         } else if (data["status"] == "rejected") {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("❌ Your request was declined.")),
+          await showDialog(
+            context: context,
+            builder:
+                (_) => AlertDialog(
+                  title: const Text("Request Rejected"),
+                  content: const Text("❌ Your request was declined."),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("OK"),
+                    ),
+                  ],
+                ),
           );
           await http.delete(url);
           setState(() => isRequested = false);
@@ -124,16 +146,38 @@ class _CompanionCardState extends State<CompanionCard> {
     if (userId == null || groupId == null || organiserId == null) return;
 
     if (userId == organiserId) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("You are the organiser.")));
+      await showDialog(
+        context: context,
+        builder:
+            (_) => AlertDialog(
+              title: const Text("Info"),
+              content: const Text("You are the organiser."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+      );
       return;
     }
 
     if (selectedPrice == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please select a price.")));
+      await showDialog(
+        context: context,
+        builder:
+            (_) => AlertDialog(
+              title: const Text("Select Price"),
+              content: const Text("Please select a price before requesting."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+      );
       return;
     }
 
@@ -148,8 +192,21 @@ class _CompanionCardState extends State<CompanionCard> {
       );
       if (res.statusCode == 200) {
         setState(() => isRequested = true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Request sent to the organiser.")),
+        await showDialog(
+          context: context,
+          builder:
+              (_) => AlertDialog(
+                title: const Text("Request Sent"),
+                content: const Text(
+                  "Your request has been sent to the organiser.",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text("OK"),
+                  ),
+                ],
+              ),
         );
       }
     } catch (e) {
@@ -243,14 +300,9 @@ class _CompanionCardState extends State<CompanionCard> {
             Positioned(
               top: 0,
               right: 0,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () => showOrganiserProfile(context, organiserId),
-                    child: CircularAvatar(userId: organiserId),
-                  ),
-                ],
+              child: GestureDetector(
+                onTap: () => showOrganiserProfile(context, organiserId),
+                child: CircularAvatar(userId: organiserId),
               ),
             ),
             Column(

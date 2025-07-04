@@ -67,7 +67,7 @@ class CircularAvatar extends StatelessWidget {
           }
         } catch (e) {
           if (kDebugMode) {
-            print('❌ Error loading image: $e');
+            debugPrint('❌ Error loading image: $e');
           }
           return CircleAvatar(
             radius: radius,

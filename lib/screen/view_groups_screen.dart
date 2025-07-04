@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-
 import '../widgets/circular_avatar.dart';
 import '../providers/user_provider.dart';
 import 'chat_screen.dart';
@@ -35,6 +34,7 @@ class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
     final url = Uri.parse(
       "https://sportface-f9594-default-rtdb.firebaseio.com/groups.json",
     );
+
     final res = await http.get(url);
 
     if (res.statusCode == 200) {
@@ -89,7 +89,6 @@ class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
         await http.put(memberRef, body: jsonEncode(currentMembers));
       }
 
-      // Mark accepted in user's profile
       await http.put(
         Uri.parse(
           'https://sportface-f9594-default-rtdb.firebaseio.com/users/$userId/groupRequests/$groupId.json',
@@ -97,7 +96,6 @@ class _ViewGroupsScreenState extends State<ViewGroupsScreen> {
         body: jsonEncode({"status": "accepted"}),
       );
     } else {
-      // Mark rejected
       await http.put(
         Uri.parse(
           'https://sportface-f9594-default-rtdb.firebaseio.com/users/$userId/groupRequests/$groupId.json',
